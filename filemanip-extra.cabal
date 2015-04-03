@@ -1,7 +1,6 @@
 Name:               filemanip-extra
 Version:            0.3.6.3
 License:            BSD3
-License-File:       LICENSE
 Author:             David Fox <dsf@seereason.com>
 Maintainer:         David Fox
 Homepage:           https://github.com/seereason/filemanip-extra

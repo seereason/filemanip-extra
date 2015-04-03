@@ -1,0 +1,23 @@
+Name:               filemanip-extra
+Version:            0.3.6.3
+License:            BSD3
+License-File:       LICENSE
+Author:             David Fox <dsf@seereason.com>
+Maintainer:         David Fox
+Homepage:           https://github.com/seereason/filemanip-extra
+Bug-reports:        https://github.com/seereason/filemanip/issues
+Category:           System
+Synopsis:           Collection of file manipulation functions based on ListLike and filemanip
+Description:        Collection of file manipulation functions based on ListLike and filemanip
+Cabal-version:      >= 1.10
+Build-type:         Simple
+
+Library
+  build-depends: base < 5, directory, filemanip, ListLike, syb, template-haskell, unix
+  GHC-Options:    -Wall
+  Exposed-Modules:
+          System.FilePath.Extra
+
+source-repository head
+  type:     git
+  location: git://github.com/seereason/filemanip-extra.git

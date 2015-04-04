@@ -12,10 +12,13 @@ Cabal-version:      >= 1.10
 Build-type:         Simple
 
 Library
-  build-depends: base < 5, directory, filemanip, ListLike, syb, template-haskell, unix
+  build-depends: base < 5, bytestring, bzlib, directory, exceptions, filemanip, filepath, ListLike, mtl, process, process-extras, syb, template-haskell, time, transformers, unix, Unixutils, zlib
   GHC-Options:    -Wall
   Exposed-Modules:
           System.FilePath.Extra
+          System.FilePath.Extra2
+          System.FilePath.Extra3
+          System.FilePath.Extra4
 
 source-repository head
   type:     git

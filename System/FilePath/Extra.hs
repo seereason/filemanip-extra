@@ -1,3 +1,4 @@
+-- | Was Appraisal.Utils.Files in the image-cache package.
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -Wall #-}
 module System.FilePath.Extra

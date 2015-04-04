@@ -49,7 +49,8 @@ updateFile path text =
              return Modified
 
 -- | Like updateFile, but doesn't write the file if it needs to be
--- modified.  Returns the same UpdateResult as updateFile.
+-- modified.  Returns the same UpdateResult as updateFile.  This
+-- *will* write the file if it doesn't exist.
 compareFile :: forall full item. (ListLikeIO full item, Eq full) => FilePath -> full -> IO UpdateResult
 compareFile path text =
     try (readFile path) >>= maybeWrite
@@ -63,13 +64,13 @@ compareFile path text =
              --hPutStrLn stderr ("New text: " ++ show text) >>
              return Modified
 
--- Replace a file's contents, accounting for the possibility that the
+-- | Replace a file's contents, accounting for the possibility that the
 -- old contents of the file may still be being read.  Apparently there
 -- is a race condition in the file system so we may get one or more
 -- isAlreadyBusyError exceptions before the writeFile succeeds.
 replaceFile :: forall full item. (ListLikeIO full item, Eq full) => FilePath -> full -> IO ()
 replaceFile path text =
-    --tries 100 10 $ -- There is now a fix for this problem, see ghc ticket 2122.
+    --tries 100 10 $ -- (This problem was fixed, see https://ghc.haskell.org/trac/ghc/ticket/2122)
     removeFileIfPresent path >> writeFileReadable path text
 
 removeFileIfPresent :: FilePath -> IO ()
@@ -91,6 +92,8 @@ makeReadableAndClose fp = do
   setFdMode fd mode'
   closeFd fd
 
+-- | This was written to write files containing template-haskell
+-- splices - Ppr is the template-haskell pretty printing class.
 compareSaveAndReturn :: (Ppr a, Data a) => (FilePath -> IO [a]) -> FilePath -> [a] -> IO [a]
 compareSaveAndReturn onChange path x =
     do let txt = unlines $ List.map (pprint . friendlyPrint) x

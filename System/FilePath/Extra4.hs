@@ -1,3 +1,4 @@
+-- | Was in Debian.Repo.MonadOS
 {-# LANGUAGE ScopedTypeVariables #-}
 module System.FilePath.Extra4
     ( withMount
@@ -8,7 +9,7 @@ module System.FilePath.Extra4
 import Control.Exception (catch)
 import Control.Monad.Catch (bracket, MonadCatch, MonadMask)
 import Control.Monad.Trans (liftIO, MonadIO)
-import Control.Monad.Trans.Except () -- instances
+-- import Control.Monad.Trans.Except ({- ExceptT instances -})
 import Data.ByteString.Lazy as L (ByteString, empty)
 import GHC.IO.Exception (IOErrorType(OtherError))
 import System.Directory (createDirectoryIfMissing)

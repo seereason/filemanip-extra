@@ -18,7 +18,6 @@ Library
           System.FilePath.Extra
           System.FilePath.Extra2
           System.FilePath.Extra3
-          System.FilePath.Extra4
 
 source-repository head
   type:     git

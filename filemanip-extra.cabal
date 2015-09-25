@@ -1,5 +1,5 @@
 Name:               filemanip-extra
-Version:            0.3.7
+Version:            0.4
 License:            BSD3
 Author:             David Fox <dsf@seereason.com>
 Maintainer:         David Fox
@@ -7,12 +7,14 @@ Homepage:           https://github.com/seereason/filemanip-extra
 Bug-reports:        https://github.com/seereason/filemanip/issues
 Category:           System
 Synopsis:           Collection of file manipulation functions based on ListLike and filemanip
-Description:        Collection of file manipulation functions based on ListLike and filemanip
+Description:        Collection of file manipulation functions based on ListLike and filemanip.
+                    Modules were collected from several parent modules, their exports should
+                    be reorganized.
 Cabal-version:      >= 1.10
 Build-type:         Simple
 
 Library
-  build-depends: base < 5, bytestring, bzlib, directory, exceptions, filemanip, filepath, ListLike, mtl, process, process-extras, syb, template-haskell, time, transformers, unix, Unixutils, zlib
+  build-depends: base < 5, bytestring, bzlib, directory, exceptions, filemanip, filepath, ListLike, mtl, process, process-extras, syb, time, transformers, unix, Unixutils, zlib
   GHC-Options:    -Wall
   Exposed-Modules:
           System.FilePath.Extra

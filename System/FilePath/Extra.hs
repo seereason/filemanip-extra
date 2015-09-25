@@ -15,7 +15,9 @@ module System.FilePath.Extra
 
 import Control.Applicative ((<$>))
 import Control.Exception as E (catch, IOException, throw, try)
-import Data.ListLike hiding (foldr)
+import Data.Data (Data)
+import Data.List as List (map)
+import Data.ListLike as LL (hPutStr, ListLikeIO, readFile, writeFile)
 import GHC.IO.Exception (ioe_description)
 import Prelude hiding (readFile)
 import System.Directory (removeFile)
@@ -23,13 +25,6 @@ import qualified System.IO as IO
 import System.IO.Error (isDoesNotExistError)
 import System.Posix.Files (getFdStatus, fileMode, setFdMode, unionFileModes, ownerReadMode, groupReadMode, otherReadMode)
 import System.Posix.IO (handleToFd, closeFd)
-
-import Data.Data (Data)
-import Data.Generics (everywhere, mkT)
-import Data.List as List (map)
-import Data.ListLike as LL (writeFile)
-import Language.Haskell.TH (Ppr, pprint)
-import Language.Haskell.TH.Syntax (Name(Name), NameFlavour(NameS))
 
 data UpdateResult = Unchanged | Created | Modified deriving (Eq, Ord, Read, Show)
 
@@ -94,21 +89,13 @@ makeReadableAndClose fp = do
 
 -- | This was written to write files containing template-haskell
 -- splices - Ppr is the template-haskell pretty printing class.
-compareSaveAndReturn :: (Ppr a, Data a) => (FilePath -> IO [a]) -> FilePath -> [a] -> IO [a]
-compareSaveAndReturn onChange path x =
-    do let txt = unlines $ List.map (pprint . friendlyPrint) x
+compareSaveAndReturn :: Data a => (FilePath -> IO [a]) -> (a -> String) -> FilePath -> [a] -> IO [a]
+compareSaveAndReturn onChange pprint path x =
+    do let txt = unlines $ List.map (pprint {- . friendlyPrint-}) x
        result <- compareFile path txt
        case result of
          Modified -> LL.writeFile (path ++ ".new") txt >> onChange path
          _ -> removeFileIfPresent (path ++ ".new") >> return x
-
--- | Make a template haskell value more human reader friendly.  The
--- result almost certainly won't be compilable.
-friendlyPrint :: Data a => a -> a
-friendlyPrint =
-    everywhere (mkT friendlyName)
-    where
-      friendlyName (Name x _) = Name x NameS -- Remove all module qualifiers
 
 changeError :: FilePath -> IO a
 changeError path =

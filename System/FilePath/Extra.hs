@@ -1,10 +1,10 @@
 -- | Was Appraisal.Utils.Files in the image-cache package.
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -Wall #-}
 module System.FilePath.Extra
     ( UpdateResult(..)
     , updateFile
-    , compareFile
+    , createFile
     , replaceFile
     , removeFileIfPresent
     , writeFileReadable
@@ -13,10 +13,10 @@ module System.FilePath.Extra
     , changeError
     ) where
 
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>))
+#endif
 import Control.Exception as E (catch, IOException, throw, try)
-import Data.Data (Data)
-import Data.List as List (map)
 import Data.ListLike as LL (hPutStr, ListLikeIO, readFile, writeFile)
 import GHC.IO.Exception (ioe_description)
 import Prelude hiding (readFile)
@@ -31,28 +31,22 @@ data UpdateResult = Unchanged | Created | Modified deriving (Eq, Ord, Read, Show
 -- | Write a file if its content is different from the given text.
 updateFile :: forall full item. (ListLikeIO full item, Eq full) => FilePath -> full -> IO UpdateResult
 updateFile path text =
-    try (readFile path) >>= maybeWrite
-    where
-      maybeWrite :: Either IOException full -> IO UpdateResult
-      maybeWrite (Left (e :: IOException)) | isDoesNotExistError e = writeFileReadable path text >> return Created
-      maybeWrite (Left e) = throw (e {ioe_description = ioe_description e ++ " (via Appraisal.Utils.File.updateFile) "})
-      maybeWrite (Right old) | old == text = return Unchanged
-      maybeWrite (Right _old) =
-          do --hPutStrLn stderr ("Old text: " ++ show old) >>
-             --hPutStrLn stderr ("New text: " ++ show text) >>
-             replaceFile path text
-             return Modified
+    createFile path text >>= \r ->
+        case r of
+          Modified -> do replaceFile path text
+                         return Modified
+          _ -> return r
 
 -- | Like updateFile, but doesn't write the file if it needs to be
 -- modified.  Returns the same UpdateResult as updateFile.  This
--- *will* write the file if it doesn't exist.
-compareFile :: forall full item. (ListLikeIO full item, Eq full) => FilePath -> full -> IO UpdateResult
-compareFile path text =
+-- *will* (attempt to) write the file if it doesn't exist.
+createFile :: forall full item. (ListLikeIO full item, Eq full) => FilePath -> full -> IO UpdateResult
+createFile path text =
     try (readFile path) >>= maybeWrite
     where
       maybeWrite :: Either IOException full -> IO UpdateResult
       maybeWrite (Left (e :: IOException)) | isDoesNotExistError e = writeFileReadable path text >> return Created
-      maybeWrite (Left e) = error ("updateFile: " ++ show e)
+      maybeWrite (Left e) = throw (e {ioe_description = ioe_description e ++ " (via System.FilePath.Extra.createFile) "})
       maybeWrite (Right old) | old == text = return Unchanged
       maybeWrite (Right _old) =
           do --hPutStrLn stderr ("Old text: " ++ show old) >>
@@ -61,7 +55,7 @@ compareFile path text =
 
 -- | Replace a file's contents, accounting for the possibility that the
 -- old contents of the file may still be being read.  Apparently there
--- is a race condition in the file system so we may get one or more
+-- is (was) a race condition in the file system so we may get one or more
 -- isAlreadyBusyError exceptions before the writeFile succeeds.
 replaceFile :: forall full item. (ListLikeIO full item, Eq full) => FilePath -> full -> IO ()
 replaceFile path text =

@@ -81,12 +81,14 @@ makeReadableAndClose fp = do
   setFdMode fd mode'
   closeFd fd
 
--- | This was written to write files containing template-haskell
--- splices - Ppr is the template-haskell pretty printing class.
-compareSaveAndReturn :: Data a => (FilePath -> IO [a]) -> (a -> String) -> FilePath -> [a] -> IO [a]
+-- | Generate some text from x and see if it matches the contents of
+-- the file at path.  This was originally intended to write files
+-- containing template-haskell splices, but now the signature has been
+-- generalized.
+compareSaveAndReturn :: (FilePath -> IO a) -> (a -> String) -> FilePath -> a -> IO a
 compareSaveAndReturn onChange pprint path x =
-    do let txt = unlines $ List.map (pprint {- . friendlyPrint-}) x
-       result <- compareFile path txt
+    do let txt = pprint x
+       result <- createFile path txt
        case result of
          Modified -> LL.writeFile (path ++ ".new") txt >> onChange path
          _ -> removeFileIfPresent (path ++ ".new") >> return x

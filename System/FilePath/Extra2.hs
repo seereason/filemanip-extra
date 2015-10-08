@@ -1,11 +1,13 @@
 -- | Was Debian.Repo.Prelude.Files in the debian-repo package.
-{-# LANGUAGE ScopedTypeVariables #-}
--- |Some extra operations on files.  The functions here generally
+--
+-- Some extra operations on files.  The functions here generally
 -- return (Right ()) on success, Left [messages] on failure, and throw
 -- an exception when a failure leaves things in an inconsistant state.
 -- An example of an inconsistant state would be if we got a failure
 -- when writing out a file, but were unable to restore the original
 -- file to its original position.
+
+{-# LANGUAGE ScopedTypeVariables #-}
 module System.FilePath.Extra2
     ( getSubDirectories
     , renameAlways
@@ -38,7 +40,7 @@ import System.FilePath.Extra3 (removeRecursiveSafely)
 import System.IO.Error
 import System.Posix.Files
 
--- |dirname
+-- | dirname
 parentPath :: FilePath -> FilePath
 parentPath path = fst (splitFileName path)
 
@@ -52,7 +54,7 @@ getSubDirectories path =
     where
       isRealDirectory name = getSymbolicLinkStatus (path ++ "/" ++ name) >>= return . not . isSymbolicLink
 
--- |Atomically install a list of files.  Returns a list of what went
+-- | Atomically install a list of files.  Returns a list of what went
 -- wrong on failure.  Will throw an error if it fails and is unable to
 -- restore the original files to their original states.
 installFiles :: [(FilePath, FilePath)] -> IO (Either [String] ())
@@ -99,7 +101,7 @@ installFiles pairs =
 lefts :: [Either a b] -> [a]
 lefts xs = catMaybes $ map (either Just (const Nothing)) xs
 
--- |Change a file's name only if the new name doesn't exist.
+-- | Change a file's name only if the new name doesn't exist.
 renameMissing :: FilePath -> FilePath -> IO (Either [String] ())
 renameMissing old new =
     do exists <- fileExist new
@@ -107,7 +109,7 @@ renameMissing old new =
          True -> return $ Right ()
          False -> renameAlways old new
 
--- |Change a file's name, removing any existing file with the new name.
+-- | Change a file's name, removing any existing file with the new name.
 renameAlways :: FilePath -> FilePath -> IO (Either [String] ())
 renameAlways old new =
     do deleted <- deleteMaybe new
@@ -117,7 +119,7 @@ renameAlways old new =
              return . either (\ (e :: SomeException) -> Left ["Couldn't rename " ++ old ++ " -> " ++ new ++ ": " ++ show e]) (\ _ -> Right ())
          x -> return x
 
--- |Change a file's name if it exists.
+-- | Change a file's name if it exists.
 renameMaybe :: FilePath -> FilePath -> IO (Either [String] ())
 renameMaybe old new =
     do exists <- fileExist old
@@ -125,7 +127,7 @@ renameMaybe old new =
          False -> return $ Right ()
          True -> renameAlways old new
 
--- |Delete a file if it exists
+-- | Delete a file if it exists
 deleteMaybe :: FilePath -> IO (Either [String] ())
 deleteMaybe path =
     do exists <- fileExist path
@@ -137,7 +139,7 @@ deleteMaybe path =
                 let rm = if isDirectory status then removeDirectory else removeLink
                 try (rm path) >>= return . either (\ (e :: SomeException) -> Left ["Couldn't remove " ++ path ++ ": " ++ show e]) (const . Right $ ())
 
--- |Create or update gzipped and bzip2-ed versions of a file.
+-- | Create or update gzipped and bzip2-ed versions of a file.
 zipFile :: FilePath -> IO (Either [String] ())
 zipFile path =
     try (do forceRemoveLink gz
@@ -156,7 +158,7 @@ zipFile path =
       --          command ++ " -> " ++ show n ++ ":\n  " ++ L.unpack (stderrOnly output)
       --      _ -> ""
 
--- |like removeLink, but does not fail if link did not exist
+-- | like removeLink, but does not fail if link did not exist
 forceRemoveLink :: FilePath -> IO ()
 forceRemoveLink fp = removeLink fp `E.catch` (\e -> unless (isDoesNotExistError e) (ioError e))
 
@@ -183,7 +185,7 @@ writeAndZipFile path text =
                    either (\ (e :: SomeException) -> return (Left ["Failure writing " ++ path ++ ": " ++ show e]))
                           (\ _ -> zipFile path))
 
--- Turn a file into a backup file if it exists.
+-- | Turn a file into a backup file if it exists.
 backupFile :: FilePath -> IO (Either [String] ())
 backupFile path = renameMaybe path (path ++ "~")
 
@@ -219,7 +221,7 @@ maybeWriteFile path text =
           --hPutStrLn stderr ("New text: " ++ show text) >>
           replaceFile path text
 
--- |Add-on for System.Posix.Files
+-- | Add-on for System.Posix.Files
 createSymbolicLinkIfMissing :: String -> FilePath -> IO ()
 createSymbolicLinkIfMissing text path =
     try (getSymbolicLinkStatus path) >>=

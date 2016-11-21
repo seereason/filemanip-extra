@@ -18,7 +18,7 @@ import System.Exit
 import System.FilePath
 import System.IO
 import System.Posix.Files
-import System.Process (system)
+import System.Process.ListLike
 import Foreign.C
 
 import System.IO.Error (isAlreadyExistsError)
@@ -40,23 +40,23 @@ find path =
         False ->
             return [(path, status)]
 
-traverse :: FilePath -> (FilePath -> IO ()) -> (FilePath -> IO ()) -> (FilePath -> IO ()) -> IO ()
--- ^ Traverse a file system directory applying D to every directory, F
+-- | Traverse a file system directory applying D to every directory, F
 -- to every non-directory file, and M to every mount point.
 -- NOTE: It is tempting to use the "find" function to returns a list
 -- of the elements of the directory and then map that list over an
 -- "unmount and remove" function.  However, because we are unmounting
 -- as we traverse, the contents of the file list may change in ways
 -- that could confuse the find function.
-traverse path f d m =
+traverse :: FilePath -> (FilePath -> IO ()) -> (FilePath -> IO ()) -> (FilePath -> IO ()) -> IO ()
+traverse path0 f d m =
     do
-      result <- try $ getSymbolicLinkStatus path
-      either (\ (_ :: SomeException) -> return ()) (doPath path) result
+      result <- try $ getSymbolicLinkStatus path0
+      either (\ (_ :: SomeException) -> return ()) (doPath path0) result
     where
       doPath path status =
           if isDirectory status then
               do
-                getDirectoryContents path >>= mapM (doDirectoryFile 1 status path)
+                getDirectoryContents path >>= mapM_ (doDirectoryFile 1 status path)
                 d path else
               f path
 
@@ -64,7 +64,7 @@ traverse path f d m =
       doDirectoryFile _ _ _ "." = return ()
       doDirectoryFile _ _ _ ".." = return ()
       doDirectoryFile tries _ _ _ | tries >= 5 =
-          error ("Couldn't unmount file system on " ++ path)
+          error ("Couldn't unmount file system on " ++ path0)
       doDirectoryFile tries status path name =
           do
             let child = path </> name
@@ -85,26 +85,26 @@ traverse path f d m =
 --   3. It doesn't use /proc/mounts, which is ambiguous or wrong
 --	when you are inside a chroot.
 removeRecursiveSafely :: FilePath -> IO ()
-removeRecursiveSafely path =
-    System.FilePath.Extra3.traverse path removeFile removeDirectory umount
+removeRecursiveSafely path0 =
+    System.FilePath.Extra3.traverse path0 removeFile removeDirectory umount
     where
       umount path =
           do
             hPutStrLn stderr ("-- removeRecursiveSafely: unmounting " ++ path)
             -- This is less likely to hang and more likely to succeed
             -- than regular umount.
-            let cmd = "umount -l " ++ path
-            result <- system cmd
+            let cmd = proc "umount" ["-l", path]
+            (result, _, _) <- readCreateProcess cmd "" :: IO (ExitCode, String, String)
             case result of
               ExitSuccess -> return ()
-              ExitFailure n -> error ("Failure: " ++ cmd ++ " -> " ++ show n)
+              ExitFailure n -> error ("Failure: " ++ showCreateProcessForUser cmd ++ " -> " ++ show n)
 
 unmountRecursiveSafely :: FilePath -> IO ()
 -- ^ Like removeRecursiveSafely but doesn't remove any files, just
 -- unmounts anything it finds mounted.  Note that this can be much
 -- slower than Mount.umountBelow, use that instead.
-unmountRecursiveSafely path =
-    System.FilePath.Extra3.traverse path noOp noOp umount
+unmountRecursiveSafely path0 =
+    System.FilePath.Extra3.traverse path0 noOp noOp umount
     where
       noOp _ = return ()
       umount path =
@@ -112,11 +112,11 @@ unmountRecursiveSafely path =
             hPutStrLn stderr ("-- unmountRecursiveSafely: unmounting " ++ path)
             -- This is less likely to hang and more likely to succeed
             -- than regular umount.
-            let cmd = "umount -l " ++ path
-            code <- system cmd
+            let cmd = proc "umount" ["-l", path]
+            (code, _, _) <- readCreateProcess cmd "" :: IO (ExitCode, String, String)
             case code of
               ExitSuccess -> return ()
-              ExitFailure n -> error ("Failure: " ++ cmd ++ " -> " ++ show n)
+              ExitFailure n -> error ("Failure: " ++ showCreateProcessForUser cmd ++ " -> " ++ show n)
 
 -- |Rename src to dst, and if dst already exists move it to dst~.
 -- If dst~ exists it is removed.
@@ -130,9 +130,9 @@ renameFileWithBackup src dst =
       removeIfExists path =
           do exists <- doesFileExist path
              if exists then removeFile path else return ()
-      renameIfExists src dst =
-          do exists <- doesFileExist src
-             if exists then System.Directory.renameFile src dst else return ()
+      renameIfExists src' dst' =
+          do exists <- doesFileExist src'
+             if exists then System.Directory.renameFile src' dst' else return ()
 
 -- |temporarily change the working directory to |dir| while running |action|
 withWorkingDirectory :: FilePath -> IO a -> IO a

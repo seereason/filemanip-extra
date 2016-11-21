@@ -18,7 +18,7 @@ module System.FilePath.Extra2
     , writeAndZipFile
     , backupFile
     , writeFileIfMissing
-    , maybeWriteFile		-- writeFileUnlessSame
+    , maybeWriteFile            -- writeFileUnlessSame
     , createSymbolicLinkIfMissing
     , prepareSymbolicLink
     , forceRemoveLink
@@ -72,9 +72,9 @@ installFiles pairs =
                       -- files back into place.
                       do restored <- mapM (uncurry renameAlways) (zip backupFiles originalFiles)
                          case lefts restored of
-	                   -- We succeeded in failing.
+                           -- We succeeded in failing.
                            [] -> return . Left . concat . lefts $ renamed
-	                   -- Restore failed.  Throw an exception.
+                           -- Restore failed.  Throw an exception.
                            _ -> error ("installFiles: Couldn't restore original files after write failure:" ++
                                        concat (map message (zip3 replacementFiles originalFiles renamed)) ++
                                        concat (map message (zip3 originalFiles backupFiles restored)))
@@ -84,9 +84,9 @@ installFiles pairs =
              -- Restore the backup for any missing original files.
              do restored <- mapM (uncurry renameMissing) (zip backupFiles originalFiles)
                 case lefts restored of
-	          -- We succeeded in failing.
+                  -- We succeeded in failing.
                   [] -> return . Left . concat . lefts $ backedUp
-		  -- Restore failed.  Throw an exception.
+                  -- Restore failed.  Throw an exception.
                   _ -> error ("installFiles: Couldn't restore original files after write failure: " ++
                               concat (map message (zip3 originalFiles backupFiles backedUp)) ++
                               concat (map message (zip3 backupFiles originalFiles restored)))
@@ -135,7 +135,7 @@ deleteMaybe path =
          False -> return $ Right ()
          True ->
              do status <- getSymbolicLinkStatus path
-		-- To do: should we remove the directory contents?
+                -- To do: should we remove the directory contents?
                 let rm = if isDirectory status then removeDirectory else removeLink
                 try (rm path) >>= return . either (\ (e :: SomeException) -> Left ["Couldn't remove " ++ path ++ ": " ++ show e]) (const . Right $ ())
 
@@ -247,7 +247,7 @@ prepareSymbolicLink name path =
 -- isAlreadyBusyError exceptions before the writeFile succeeds.
 replaceFile :: FilePath -> String -> IO ()
 replaceFile path text =
-    --tries 100 10 f	-- There is now a fix for this problem, see ghc ticket 2122.
+    --tries 100 10 f    -- There is now a fix for this problem, see ghc ticket 2122.
     f
     where
       f :: IO ()

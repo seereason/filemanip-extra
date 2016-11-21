@@ -1,5 +1,5 @@
 Name:               filemanip-extra
-Version:            0.5
+Version:            0.5.1
 License:            BSD3
 Author:             David Fox <dsf@seereason.com>
 Maintainer:         David Fox
@@ -14,7 +14,7 @@ Cabal-version:      >= 1.10
 Build-type:         Simple
 
 Library
-  build-depends: base < 5, bytestring, bzlib, directory, exceptions, filemanip, filepath, ListLike, mtl, process, process-extras, syb, time, transformers, unix, Unixutils, zlib
+  build-depends: base < 5, bytestring, bzlib, directory, exceptions, filemanip, filepath, ListLike, mtl, process-extras, syb, time, transformers, unix, Unixutils, zlib
   GHC-Options:    -Wall
   Exposed-Modules:
           System.FilePath.Extra
